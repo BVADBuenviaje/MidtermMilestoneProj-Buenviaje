@@ -124,22 +124,22 @@ if ($viewFavorites) {
             </div>
 
             <!-- Search & Category Filters -->
-            <form id="filter-form" onsubmit="event.preventDefault();" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <form id="filter-form" onsubmit="event.preventDefault(); return false;" class="flex flex-col sm:flex-row gap-3 items-center">
                 <?php if ($viewFavorites): ?>
                     <input type="hidden" name="view" value="favorites">
                 <?php endif; ?>
 
-                <!-- Keyword Search -->
-                <div class="sm:col-span-6">
+                <!-- Keyword Search (Expands to fill horizontal space) -->
+                <div class="flex-1 w-full">
                     <input type="text" id="live-search" name="search" 
                            value="<?= htmlspecialchars($keyword) ?>" 
                            placeholder="Search recipes by title or ingredients..." 
-                           style="border: 1px solid #cbd5e1; background-color: #ffffff; color: #1e293b; padding: 8px; border-radius: 6px; width: 100%;">
+                           style="border: 1px solid #cbd5e1; background-color: #ffffff; color: #1e293b; padding: 8px 12px; border-radius: 6px; width: 100%;">
                 </div>
 
                 <!-- Category Selector -->
-                <div class="sm:col-span-4">
-                    <select id="live-category" name="category" style="border: 1px solid #cbd5e1; background-color: #ffffff; color: #1e293b; padding: 8px; border-radius: 6px; width: 100%;">
+                <div class="w-full sm:w-64">
+                    <select id="live-category" name="category" style="border: 1px solid #cbd5e1; background-color: #ffffff; color: #1e293b; padding: 8px 12px; border-radius: 6px; width: 100%;">
                         <option value="">All Categories</option>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= htmlspecialchars((string)$cat['id']) ?>" <?= ($categoryId === (int)$cat['id']) ? 'selected' : '' ?>>
@@ -149,17 +149,11 @@ if ($viewFavorites) {
                     </select>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="sm:col-span-2 flex items-center gap-2">
-                    <button type="button" id="search-btn"
-                            style="background-color: #d97706; color: #ffffff; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; border: none; cursor: pointer; width: 100%;">
-                        Search
-                    </button>
-                    <button type="button" id="clear-filter-btn" title="Reset Filters"
-                            class="px-3 py-2 text-xs text-stone-500 hover:text-stone-800 bg-stone-100 rounded-md cursor-pointer">
-                        Clear
-                    </button>
-                </div>
+                <!-- Reset Filter -->
+                <button type="button" id="clear-filter-btn" title="Reset Filters"
+                        class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-md cursor-pointer transition">
+                    Clear
+                </button>
             </form>
         </div>
 
@@ -266,12 +260,12 @@ if ($viewFavorites) {
     <!-- Live Search & Category Filter Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const filterForm = document.getElementById('filter-form');
             const searchInput = document.getElementById('live-search');
             const categorySelect = document.getElementById('live-category');
             const cards = document.querySelectorAll('.recipe-card');
             const noResultsEl = document.getElementById('no-recipes-found');
             const gridEl = document.getElementById('recipes-grid');
-            const searchBtn = document.getElementById('search-btn');
             const clearBtn = document.getElementById('clear-filter-btn');
 
             function applyFilter() {
@@ -309,14 +303,22 @@ if ($viewFavorites) {
                 }
             }
 
+            if (filterForm) {
+                filterForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    return false;
+                });
+            }
             if (searchInput) {
                 searchInput.addEventListener('input', applyFilter);
+                searchInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                    }
+                });
             }
             if (categorySelect) {
                 categorySelect.addEventListener('change', applyFilter);
-            }
-            if (searchBtn) {
-                searchBtn.addEventListener('click', applyFilter);
             }
             if (clearBtn) {
                 clearBtn.addEventListener('click', function () {
