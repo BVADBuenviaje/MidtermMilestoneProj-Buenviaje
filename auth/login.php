@@ -113,7 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </span>
                     <input type="password" id="password" name="password" required
                            placeholder="••••••••"
-                           class="w-full pl-10 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#c54e26] focus:border-transparent transition">
+                           class="w-full pl-10 pr-10 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#c54e26] focus:border-transparent transition">
+                    <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 flex items-center pr-3 text-stone-400 hover:text-stone-600 focus:outline-none cursor-pointer" aria-label="Toggle password visibility">
+                        <i class="fa-regular fa-eye text-sm" id="togglePasswordIcon"></i>
+                    </button>
                 </div>
             </div>
 
@@ -132,5 +135,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
         </p>
     </div>
+
+    <script>
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('togglePasswordIcon');
+
+        if (toggleBtn && passwordInput && toggleIcon) {
+            toggleBtn.addEventListener('click', function () {
+                const isPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                toggleIcon.classList.toggle('fa-eye');
+                toggleIcon.classList.toggle('fa-eye-slash');
+            });
+        }
+    </script>
 </body>
 </html>

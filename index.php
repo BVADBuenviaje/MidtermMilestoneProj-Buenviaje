@@ -124,14 +124,14 @@ if ($viewFavorites) {
             </div>
 
             <!-- Search & Category Filters -->
-            <form method="GET" action="index.php" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <form id="filter-form" onsubmit="event.preventDefault();" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                 <?php if ($viewFavorites): ?>
                     <input type="hidden" name="view" value="favorites">
                 <?php endif; ?>
 
                 <!-- Keyword Search -->
                 <div class="sm:col-span-6">
-                    <input type="text" name="search" 
+                    <input type="text" id="live-search" name="search" 
                            value="<?= htmlspecialchars($keyword) ?>" 
                            placeholder="Search recipes by title or ingredients..." 
                            style="border: 1px solid #cbd5e1; background-color: #ffffff; color: #1e293b; padding: 8px; border-radius: 6px; width: 100%;">
@@ -139,7 +139,7 @@ if ($viewFavorites) {
 
                 <!-- Category Selector -->
                 <div class="sm:col-span-4">
-                    <select name="category" style="border: 1px solid #cbd5e1; background-color: #ffffff; color: #1e293b; padding: 8px; border-radius: 6px; width: 100%;">
+                    <select id="live-category" name="category" style="border: 1px solid #cbd5e1; background-color: #ffffff; color: #1e293b; padding: 8px; border-radius: 6px; width: 100%;">
                         <option value="">All Categories</option>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= htmlspecialchars((string)$cat['id']) ?>" <?= ($categoryId === (int)$cat['id']) ? 'selected' : '' ?>>
@@ -151,109 +151,108 @@ if ($viewFavorites) {
 
                 <!-- Action Buttons -->
                 <div class="sm:col-span-2 flex items-center gap-2">
-                    <button type="submit" 
+                    <button type="button" id="search-btn"
                             style="background-color: #d97706; color: #ffffff; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; border: none; cursor: pointer; width: 100%;">
                         Search
                     </button>
-                    <?php if ($keyword !== '' || $categoryId !== null): ?>
-                        <a href="<?= $viewFavorites ? 'index.php?view=favorites' : 'index.php' ?>" 
-                           title="Clear Filters"
-                           class="px-3 py-2 text-xs text-stone-500 hover:text-stone-800 bg-stone-100 rounded-md">
-                            Clear
-                        </a>
-                    <?php endif; ?>
+                    <button type="button" id="clear-filter-btn" title="Reset Filters"
+                            class="px-3 py-2 text-xs text-stone-500 hover:text-stone-800 bg-stone-100 rounded-md cursor-pointer">
+                        Clear
+                    </button>
                 </div>
             </form>
         </div>
 
-        <!-- Recipe Grid / List -->
-        <?php if (empty($recipes)): ?>
-            <div class="bg-white rounded-2xl p-12 text-center border border-amber-100 shadow-sm space-y-3">
-                <div class="w-16 h-16 mx-auto rounded-full bg-amber-50 flex items-center justify-center text-amber-700 text-2xl">
-                    <i class="fa-solid fa-kitchen-set"></i>
-                </div>
-                <h3 class="text-lg font-bold text-stone-800">No recipes found</h3>
-                <p class="text-sm text-stone-500 max-w-sm mx-auto">
-                    <?= $viewFavorites 
-                        ? "You haven't saved any favorite recipes yet. Click the heart icon on any recipe to save it here!" 
-                        : "Try adjusting your search keywords or category filter, or share the first recipe!" ?>
-                </p>
-                <?php if ($isLoggedIn && !$viewFavorites): ?>
-                    <div class="pt-3">
-                        <a href="recipes/create.php" 
-                           style="background-color: #d97706; color: #ffffff; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none;">
-                            Share a Recipe
-                        </a>
-                    </div>
-                <?php endif; ?>
+        <!-- No Recipes Found Message -->
+        <div id="no-recipes-found" class="<?= empty($recipes) ? '' : 'hidden' ?> bg-white rounded-2xl p-12 text-center border border-amber-100 shadow-sm space-y-3">
+            <div class="w-16 h-16 mx-auto rounded-full bg-amber-50 flex items-center justify-center text-amber-700 text-2xl">
+                <i class="fa-solid fa-kitchen-set"></i>
             </div>
-        <?php else: ?>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <?php foreach ($recipes as $r): ?>
-                    <?php 
-                    $recipeId = (int)$r['id'];
-                    $isFav    = isset($userFavoritedIds[$recipeId]);
-                    ?>
-                    <div class="bg-white rounded-2xl border border-amber-100/90 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden">
-                        <div class="p-6 space-y-3">
-                            <!-- Badges & Favorite Button -->
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex flex-wrap items-center gap-1.5">
-                                    <span style="background-color: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
-                                        <?= htmlspecialchars($r['category_name']) ?>
-                                    </span>
-                                    <?php if ((int)$r['is_edited'] === 1): ?>
-                                        <span style="background-color: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
-                                            (edited)
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
+            <h3 class="text-lg font-bold text-stone-800">No recipes found</h3>
+            <p class="text-sm text-stone-500 max-w-sm mx-auto">
+                <?= $viewFavorites 
+                    ? "You haven't saved any favorite recipes yet. Click the heart icon on any recipe to save it here!" 
+                    : "No recipes match your search criteria. Try a different keyword or category!" ?>
+            </p>
+            <?php if ($isLoggedIn && !$viewFavorites): ?>
+                <div class="pt-3">
+                    <a href="recipes/create.php" 
+                       style="background-color: #d97706; color: #ffffff; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none;">
+                        Share a Recipe
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
 
-                                <!-- Favorite Toggle Button -->
-                                <button type="button" 
-                                        class="fav-btn p-1.5 rounded-full hover:bg-rose-50 transition cursor-pointer"
-                                        data-recipe-id="<?= htmlspecialchars((string)$recipeId) ?>"
-                                        title="<?= $isFav ? 'Favorited' : 'Add to Favorites' ?>">
-                                    <i class="<?= $isFav ? 'fa-solid' : 'fa-regular' ?> fa-heart text-base"
-                                       style="color: <?= $isFav ? '#ef4444' : '#94a3b8' ?>;"></i>
-                                </button>
+        <!-- Recipe Grid / List -->
+        <div id="recipes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 <?= empty($recipes) ? 'hidden' : '' ?>">
+            <?php foreach ($recipes as $r): ?>
+                <?php 
+                $recipeId = (int)$r['id'];
+                $isFav    = isset($userFavoritedIds[$recipeId]);
+                ?>
+                <div class="recipe-card bg-white rounded-2xl border border-amber-100/90 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden"
+                     data-title="<?= htmlspecialchars(mb_strtolower($r['title'])) ?>"
+                     data-category="<?= htmlspecialchars((string)$r['category_id']) ?>"
+                     data-desc="<?= htmlspecialchars(mb_strtolower($r['description'])) ?>">
+                    <div class="p-6 space-y-3">
+                        <!-- Badges & Favorite Button -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span style="background-color: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
+                                    <?= htmlspecialchars($r['category_name']) ?>
+                                </span>
+                                <?php if ((int)$r['is_edited'] === 1): ?>
+                                    <span style="background-color: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
+                                        (edited)
+                                    </span>
+                                <?php endif; ?>
                             </div>
 
-                            <!-- Title -->
-                            <h2 class="text-xl font-bold text-stone-900 tracking-tight leading-snug hover:text-[#d97706] transition">
-                                <a href="recipes/view.php?id=<?= htmlspecialchars((string)$recipeId) ?>">
-                                    <?= htmlspecialchars($r['title']) ?>
-                                </a>
-                            </h2>
-
-                            <!-- Author & Time -->
-                            <p class="text-xs text-stone-400">
-                                By <strong class="text-stone-700"><?= htmlspecialchars($r['username']) ?></strong>
-                                &bull; <?= htmlspecialchars(date('M j, Y', strtotime($r['created_at']))) ?>
-                            </p>
-
-                            <!-- Description Snippet -->
-                            <p class="text-sm text-stone-600 line-clamp-2 leading-relaxed">
-                                <?= htmlspecialchars($r['description']) ?>
-                            </p>
+                            <!-- Favorite Toggle Button -->
+                            <button type="button" 
+                                    class="fav-btn p-1.5 rounded-full hover:bg-rose-50 transition cursor-pointer"
+                                    data-recipe-id="<?= htmlspecialchars((string)$recipeId) ?>"
+                                    title="<?= $isFav ? 'Favorited' : 'Add to Favorites' ?>">
+                                <i class="<?= $isFav ? 'fa-solid' : 'fa-regular' ?> fa-heart text-base"
+                                   style="color: <?= $isFav ? '#ef4444' : '#94a3b8' ?>;"></i>
+                            </button>
                         </div>
 
-                        <!-- Card Footer -->
-                        <div class="px-6 py-4 bg-stone-50/60 border-t border-stone-100 flex items-center justify-between">
-                            <span style="background-color: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
-                                <i class="fa-regular fa-clock mr-1"></i><?= htmlspecialchars((string)$r['cooking_time_mins']) ?> mins
-                            </span>
-
-                            <a href="recipes/view.php?id=<?= htmlspecialchars((string)$recipeId) ?>" 
-                               class="text-xs font-semibold text-amber-800 hover:text-amber-950 flex items-center gap-1 transition">
-                                <span>View Recipe</span>
-                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        <!-- Title -->
+                        <h2 class="text-xl font-bold text-stone-900 tracking-tight leading-snug hover:text-[#d97706] transition">
+                            <a href="recipes/view.php?id=<?= htmlspecialchars((string)$recipeId) ?>">
+                                <?= htmlspecialchars($r['title']) ?>
                             </a>
-                        </div>
+                        </h2>
+
+                        <!-- Author & Time -->
+                        <p class="text-xs text-stone-400">
+                            By <strong class="text-stone-700"><?= htmlspecialchars($r['username']) ?></strong>
+                            &bull; <?= htmlspecialchars(date('M j, Y', strtotime($r['created_at']))) ?>
+                        </p>
+
+                        <!-- Description Snippet -->
+                        <p class="text-sm text-stone-600 line-clamp-2 leading-relaxed">
+                            <?= htmlspecialchars($r['description']) ?>
+                        </p>
                     </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
+
+                    <!-- Card Footer -->
+                    <div class="px-6 py-4 bg-stone-50/60 border-t border-stone-100 flex items-center justify-between">
+                        <span style="background-color: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
+                            <i class="fa-regular fa-clock mr-1"></i><?= htmlspecialchars((string)$r['cooking_time_mins']) ?> mins
+                        </span>
+
+                        <a href="recipes/view.php?id=<?= htmlspecialchars((string)$recipeId) ?>" 
+                           class="text-xs font-semibold text-amber-800 hover:text-amber-950 flex items-center gap-1 transition">
+                            <span>View Recipe</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
     </main>
 
     <!-- Footer -->
@@ -263,5 +262,70 @@ if ($viewFavorites) {
 
     <!-- AJAX Favorites Script -->
     <script src="assets/js/favorites.js"></script>
+
+    <!-- Live Search & Category Filter Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('live-search');
+            const categorySelect = document.getElementById('live-category');
+            const cards = document.querySelectorAll('.recipe-card');
+            const noResultsEl = document.getElementById('no-recipes-found');
+            const gridEl = document.getElementById('recipes-grid');
+            const searchBtn = document.getElementById('search-btn');
+            const clearBtn = document.getElementById('clear-filter-btn');
+
+            function applyFilter() {
+                const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                const selectedCat = categorySelect ? categorySelect.value.trim() : '';
+
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    const title = card.getAttribute('data-title') || '';
+                    const category = card.getAttribute('data-category') || '';
+                    const desc = card.getAttribute('data-desc') || '';
+
+                    const matchesQuery = !query || title.includes(query) || desc.includes(query);
+                    const matchesCat = !selectedCat || category === selectedCat;
+
+                    if (matchesQuery && matchesCat) {
+                        card.style.display = '';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                if (noResultsEl) {
+                    if (visibleCount === 0) {
+                        noResultsEl.classList.remove('hidden');
+                        noResultsEl.style.display = '';
+                        if (gridEl) gridEl.classList.add('hidden');
+                    } else {
+                        noResultsEl.classList.add('hidden');
+                        noResultsEl.style.display = 'none';
+                        if (gridEl) gridEl.classList.remove('hidden');
+                    }
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', applyFilter);
+            }
+            if (categorySelect) {
+                categorySelect.addEventListener('change', applyFilter);
+            }
+            if (searchBtn) {
+                searchBtn.addEventListener('click', applyFilter);
+            }
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function () {
+                    if (searchInput) searchInput.value = '';
+                    if (categorySelect) categorySelect.value = '';
+                    applyFilter();
+                });
+            }
+        });
+    </script>
 </body>
 </html>
